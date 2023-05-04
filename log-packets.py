@@ -4,25 +4,26 @@ The script will read the received lora packets over serial and save the packet c
 """
 
 import serial
-import time
+from datetime import datetime
 import sys
 
 # open file and write header
 def setup():
     fileName = sys.argv[1]
     f = open(fileName, "x")
-    f.write("Log of received LoRa packets sent over serial")
+    f.write("Log of received LoRa packets sent over serial \n")
     f.close()
+    # ser = serial.Serial('/dev/ttyUSB0', 115200)  # open serial port (Linux)
+    ser = serial.Serial('COM3', 115200) # open serial port (Windows)
+    return ser
 
 def format_output(s):
-    s = s.replace("'", "")
-    s = s.replace("b", "")
-    s = s.replace("\\r\\n", "\n")
-    return s
+     s = s.replace("'", "")
+     s = s.replace("b", "")
+     s = s.replace("\\r\\n", "")
+     return s
 
-def record_packet():
-    ser = serial.Serial('/dev/ttyUSB0', 115200)  # open serial port (Linux)
-    # ser = serial.Serial('COM6', 115200) # open serial port (Windows)
+def record_packet(ser):
     
     fileName = sys.argv[1]
     f = open(fileName, "a")
@@ -30,17 +31,17 @@ def record_packet():
     x = ser.read_until(expected=b"\r\n")
     s = format_output(str(x))
     
-    currentTime = time.monotonic()
-    f.write(f"Timestamp = {str(currentTime)}; Received packet = {s}\n")
+    currentTime = datetime.now()
+    dt_string = currentTime.strftime("%m/%d/%Y %H:%M:%S")
+    f.write(f"Timestamp = {dt_string}; Received packet = {s}\n")
     f.close()
-    ser.close()
 
 # Main
 if len(sys.argv) != 2:
     print("Please enter 1 argument (fileName)")
     sys.exit()
 
-setup()
+ser = setup()
 # Run indefinitely
-#while True:
-record_packet()
+while True:
+    record_packet(ser)
